@@ -3,12 +3,16 @@
     "name": "ImageReaper",
     "version": "0.1.0",
     "description": "Scan pages for images from specified hosts and download them (development build).",
+    "permissions": [
+        "storage"
+    ],
     "content_scripts": [
         {
             "matches": [
                 "<all_urls>"
             ],
             "js": [
+                "defaults.js",
                 "content.js"
             ],
             "run_at": "document_idle"
