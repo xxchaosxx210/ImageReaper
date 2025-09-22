@@ -1,5 +1,5 @@
 /* content.js — ImageReaper
-   Purpose: scan the page for image candidates in DOM order, filter them by host and extension,
+   Purpose: scan the page for candidate links, filter by host/extension,
    and emit them back to popup or background. Settings are loaded from chrome.storage.local.
 */
 
@@ -62,7 +62,7 @@ function scanPageForImages() {
     const results = [];
     let idx = 0;
 
-    function pushCandidate(rawUrl, element) {
+    function pushCandidate(rawUrl, element, { requireImageExt = true, kind = "link" } = {}) {
         if (!rawUrl) return;
 
         const parsed = parseUrl(rawUrl);
@@ -71,30 +71,51 @@ function scanPageForImages() {
         const host = parsed.hostname;
         if (!isHostAllowed(host)) return;
 
-        const ext = getExtFromUrl(parsed.href);
-        if (!ext || !CONFIG.allowedExts.includes(ext)) return;
+        if (requireImageExt) {
+            const ext = getExtFromUrl(parsed.href);
+            if (!ext || !CONFIG.allowedExts.includes(ext)) return;
+        }
 
         results.push({
             url: parsed.href,
             host,
-            ext,
+            ext: getExtFromUrl(parsed.href),
             index: idx++,
             elementTag: element ? element.tagName.toLowerCase() : null,
+            linkKind: kind,
             pageTitle: document.title || null,
             pageUrl: location.href
         });
     }
 
-    // <img>
-    document.querySelectorAll("img[src]").forEach(img => pushCandidate(img.src, img));
-
-    // <a> with direct image links
-    document.querySelectorAll("a[href]").forEach(a => {
-        const ext = getExtFromUrl(a.href);
-        if (ext && CONFIG.allowedExts.includes(ext)) pushCandidate(a.href, a);
+    // Anchors that wrap thumbnails → capture the <a href>, ignore <img src>
+    document.querySelectorAll("a[href] > img[src]").forEach(img => {
+        const parentLink = img.closest("a[href]");
+        if (parentLink) {
+            // No extension requirement here (viewer pages allowed)
+            pushCandidate(parentLink.href, img, { requireImageExt: false, kind: "anchor" });
+        }
     });
 
-    return results;
+    // Direct <a href="...jpg/png/..."> links
+    document.querySelectorAll("a[href]").forEach(a => {
+        const ext = getExtFromUrl(a.href);
+        if (ext && CONFIG.allowedExts.includes(ext)) {
+            pushCandidate(a.href, a, { requireImageExt: true, kind: "direct-link" });
+        }
+    });
+
+    // Deduplicate by URL
+    const unique = [];
+    const seen = new Set();
+    results.forEach(item => {
+        if (!seen.has(item.url)) {
+            seen.add(item.url);
+            unique.push(item);
+        }
+    });
+
+    return unique;
 }
 
 function performScanAndEmit() {
@@ -102,10 +123,9 @@ function performScanAndEmit() {
     if (candidates.length === 0) {
         log("No images found.");
     } else {
-        log(`Found ${candidates.length} images:`);
-        candidates.forEach(item => log(" →", item.url));
+        log(`Found ${candidates.length} links:`);
+        candidates.forEach(item => log(` → [${item.linkKind}]`, item.url));
     }
-
     return candidates;
 }
 

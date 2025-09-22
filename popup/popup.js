@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressBar = document.getElementById("progressBar");
     const progressText = document.getElementById("progressText");
     const status = document.getElementById("status");
+    const resultsList = document.getElementById("resultsList");
 
     // --- Scan button ---
     scanBtn.addEventListener("click", () => {
@@ -27,6 +28,22 @@ document.addEventListener("DOMContentLoaded", () => {
                         progressText.textContent = `${response.count} images found`;
                         status.textContent = "✅ Scan complete";
                         downloadBtn.disabled = response.count === 0;
+
+                        // Log results to popup console
+                        console.log(`Found ${response.count} images:`);
+                        response.items.forEach(item => console.log(" →", item.url));
+
+                        // Display results in popup
+                        resultsList.innerHTML = ""; // clear old results
+                        response.items.forEach(item => {
+                            const li = document.createElement("li");
+                            const link = document.createElement("a");
+                            link.href = item.url;
+                            link.textContent = item.url;
+                            link.target = "_blank"; // open in new tab
+                            li.appendChild(link);
+                            resultsList.appendChild(li);
+                        });
                     } else {
                         status.textContent = "❌ No response from content script.";
                     }

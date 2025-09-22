@@ -1,0 +1,33 @@
+#resultsContainer {
+    max-height: 150px;
+    /* keep popup compact */
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 5px;
+    margin-top: 5px;
+    border-radius: 4px;
+}
+
+#resultsList {
+    font-size: 12px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#resultsList li {
+    margin: 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#resultsList li a {
+    color: #0078d7;
+    text-decoration: none;
+}
+
+#resultsList li a:hover {
+    text-decoration: underline;
+}
