@@ -7,44 +7,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const progressText = document.getElementById("progressText");
     const status = document.getElementById("status");
 
-    let foundImages = 0;
-
-    // Simulate scanning
+    // --- Scan button ---
     scanBtn.addEventListener("click", () => {
         status.textContent = "🔍 Scanning page...";
-        foundImages = Math.floor(Math.random() * 50) + 1; // fake number of images
-        setTimeout(() => {
-            progressBar.style.width = "100%";
-            progressText.textContent = `${foundImages} images found`;
-            downloadBtn.disabled = false;
-            status.textContent = "✅ Scan complete";
-        }, 1000);
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            chrome.tabs.sendMessage(
+                tabs[0].id,
+                { action: "scanPage" },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        status.textContent = "❌ Could not scan this page.";
+                        console.error("Scan error:", chrome.runtime.lastError.message);
+                        return;
+                    }
+
+                    if (response && response.ok) {
+                        progressBar.style.width = "100%";
+                        progressText.textContent = `${response.count} images found`;
+                        status.textContent = "✅ Scan complete";
+                        downloadBtn.disabled = response.count === 0;
+                    } else {
+                        status.textContent = "❌ No response from content script.";
+                    }
+                }
+            );
+        });
     });
 
-    // Simulate download
+    // --- Download button (not fully implemented yet) ---
     downloadBtn.addEventListener("click", () => {
-        status.textContent = "⬇️ Downloading...";
-        let downloaded = 0;
-        const interval = setInterval(() => {
-            downloaded++;
-            const percent = Math.floor((downloaded / foundImages) * 100);
-            progressBar.style.width = percent + "%";
-            progressText.textContent = `${downloaded} / ${foundImages} downloaded`;
-
-            if (downloaded >= foundImages) {
-                clearInterval(interval);
-                status.textContent = "✅ Download complete!";
-            }
-        }, 100);
+        status.textContent = "⬇️ Download feature coming soon...";
+        console.log("Download button clicked (to be implemented)");
     });
 
-    // Auto Mode toggle
+    // --- Auto Mode toggle ---
     autoMode.addEventListener("change", () => {
-        console.log("Auto Mode:", autoMode.checked);
+        chrome.storage.local.set({ autoMode: autoMode.checked }, () => {
+            console.log("Auto Mode set to", autoMode.checked);
+        });
     });
 
-    // Thumbnails toggle
+    // --- Show Thumbnails toggle ---
     showThumbs.addEventListener("change", () => {
         console.log("Show Thumbnails:", showThumbs.checked);
+    });
+
+    // --- Load saved settings into popup controls ---
+    chrome.storage.local.get(["autoMode"], (items) => {
+        autoMode.checked = items.autoMode || false;
     });
 });

@@ -1,19 +1,12 @@
 /* content.js — ImageReaper
    Purpose: scan the page for image candidates in DOM order, filter them by host and extension,
-   and emit them to the background or console. Settings are loaded from chrome.storage.local.
+   and emit them back to popup or background. Settings are loaded from chrome.storage.local.
 */
 
 /* ---------------------------
-   Default CONFIG (used if no saved settings exist)
+   CONFIG
    --------------------------- */
-const CONFIG = {
-    hostWhitelist: [],
-    hostBlacklist: [],
-    allowedExts: ["jpg", "jpeg"],
-    debug: true,
-    mutationObserve: false,
-    mutationDebounceMs: 400
-};
+const CONFIG = { ...IMAGE_REAPER_DEFAULTS };
 
 /* ---------------------------
    Utility helpers
@@ -108,31 +101,12 @@ function performScanAndEmit() {
     const candidates = scanPageForImages();
     if (candidates.length === 0) {
         log("No images found.");
-        return;
+    } else {
+        log(`Found ${candidates.length} images:`);
+        candidates.forEach(item => log(" →", item.url));
     }
 
-    const payload = {
-        source: "image-reaper-content",
-        pageUrl: location.href,
-        pageTitle: document.title,
-        count: candidates.length,
-        items: candidates
-    };
-
-    log("Found images:", payload);
-
-    // Send to background (if exists) or just log
-    try {
-        chrome.runtime.sendMessage(payload, (response) => {
-            if (chrome.runtime.lastError) {
-                log("sendMessage error:", chrome.runtime.lastError.message);
-            } else {
-                log("Background response:", response);
-            }
-        });
-    } catch (e) {
-        log("Could not send message:", e.message);
-    }
+    return candidates;
 }
 
 /* ---------------------------
@@ -169,12 +143,23 @@ window.ImageReaper = {
 /* ---------------------------
    Load saved settings before starting
    --------------------------- */
-chrome.storage.local.get(CONFIG, (items) => {
+chrome.storage.local.get(IMAGE_REAPER_DEFAULTS, (items) => {
     Object.assign(CONFIG, items);
     log("Loaded config from storage:", CONFIG);
 
-    performScanAndEmit();
-    if (CONFIG.mutationObserve) startMutationObserverIfNeeded();
+    if (CONFIG.autoMode) {
+        performScanAndEmit();
+        if (CONFIG.mutationObserve) startMutationObserverIfNeeded();
+    }
 });
 
-
+/* ---------------------------
+   Listen for popup messages
+   --------------------------- */
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.action === "scanPage") {
+        const results = performScanAndEmit();
+        sendResponse({ ok: true, count: results.length, items: results });
+    }
+    return true; // keeps sendResponse async-safe
+});

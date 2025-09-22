@@ -1,5 +1,5 @@
 // defaults.js — ImageReaper
-// Centralized defaults for both content.js and options.js
+// Centralized defaults for content.js, options.js, and popup.js
 
 const IMAGE_REAPER_DEFAULTS = {
     hostWhitelist: [
@@ -13,7 +13,8 @@ const IMAGE_REAPER_DEFAULTS = {
     allowedExts: ["jpg", "jpeg"],
     debug: true,
     mutationObserve: false,
-    mutationDebounceMs: 400
+    mutationDebounceMs: 400,
+    autoMode: false // New: only auto-scan when enabled
 };
 
 // Expose to other scripts
