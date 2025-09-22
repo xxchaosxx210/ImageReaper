@@ -18,5 +18,13 @@
             "run_at": "document_idle"
         }
     ],
-    "options_page": "options.html"
+    "options_page": "options/options.html",
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "assets/icon16.png",
+            "48": "assets/icon48.png",
+            "128": "assets/icon128.png"
+        }
+    }
 }

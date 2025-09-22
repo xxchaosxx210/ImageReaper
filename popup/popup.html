@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>ImageReaper</title>
+    <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+    <div class="container">
+        <h1>ImageReaper</h1>
+
+        <!-- Main Controls -->
+        <button id="scanBtn">🔍 Scan Page</button>
+        <button id="downloadBtn" disabled>⬇️ Download</button>
+
+        <!-- Toggles -->
+        <div class="toggles">
+            <label><input type="checkbox" id="autoMode" /> Auto Mode</label>
+            <label><input type="checkbox" id="showThumbs" /> Show Thumbnails</label>
+        </div>
+
+        <!-- Progress -->
+        <div id="progressContainer">
+            <div id="progressBar"></div>
+        </div>
+        <p id="progressText">0 images found</p>
+
+        <!-- Status / Messages -->
+        <div id="status"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>

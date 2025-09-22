@@ -176,3 +176,5 @@ chrome.storage.local.get(CONFIG, (items) => {
     performScanAndEmit();
     if (CONFIG.mutationObserve) startMutationObserverIfNeeded();
 });
+
+
