@@ -1,11 +1,15 @@
-// Default settings (keep in sync with content.js)
+// Default settings (keep in sync with content.js and defaults.js)
 const DEFAULTS = {
     hostWhitelist: ["imagebam.com", "imagevenue.com", "pixhost.to", "imgbox.com", "pimpandhost.com"],
     hostBlacklist: [],
     allowedExts: ["jpg", "jpeg"],
     debug: true,
     mutationObserve: false,
-    mutationDebounceMs: 400
+    mutationDebounceMs: 400,
+
+    // NEW
+    downloadFolder: "ImageReaper",
+    filenamePrefix: ""
 };
 
 function loadOptions() {
@@ -16,6 +20,10 @@ function loadOptions() {
         document.getElementById("debug").checked = !!items.debug;
         document.getElementById("mutationObserve").checked = !!items.mutationObserve;
         document.getElementById("debounce").value = items.mutationDebounceMs;
+
+        // NEW fields
+        document.getElementById("downloadFolder").value = items.downloadFolder || DEFAULTS.downloadFolder;
+        document.getElementById("filenamePrefix").value = items.filenamePrefix || DEFAULTS.filenamePrefix;
     });
 }
 
@@ -33,13 +41,21 @@ function saveOptions() {
     const mutationObserve = document.getElementById("mutationObserve").checked;
     const debounce = parseInt(document.getElementById("debounce").value, 10) || DEFAULTS.mutationDebounceMs;
 
+    // NEW fields
+    const downloadFolder = document.getElementById("downloadFolder").value.trim() || DEFAULTS.downloadFolder;
+    const filenamePrefix = document.getElementById("filenamePrefix").value.trim();
+
     chrome.storage.local.set({
         hostWhitelist: whitelist,
         hostBlacklist: blacklist,
         allowedExts: exts,
         debug,
         mutationObserve,
-        mutationDebounceMs: debounce
+        mutationDebounceMs: debounce,
+
+        // NEW
+        downloadFolder,
+        filenamePrefix
     }, () => {
         const status = document.getElementById("status");
         status.textContent = "Options saved.";
