@@ -56,8 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     downloadBtn.addEventListener("click", () => {
         const folder = document.getElementById("popupDownloadFolder").value.trim() || "ImageReaper";
         const prefix = document.getElementById("popupFilenamePrefix").value.trim();
-
-        window.alert(`Download path: ${folder}\nPrefix: ${prefix}`);
     });
 
 
