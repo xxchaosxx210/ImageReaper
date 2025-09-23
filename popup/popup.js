@@ -2,30 +2,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const scanBtn = document.getElementById("scanBtn");
     const autoMode = document.getElementById("autoMode");
     const showThumbs = document.getElementById("showThumbs");
-    const progressBar = document.getElementById("progressBar");
-    const progressText = document.getElementById("progressText");
-    const status = document.getElementById("status");
 
     // --- Scan button ---
     scanBtn.addEventListener("click", () => {
-        status.textContent = "🔍 Scanning page...";
-
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             chrome.tabs.sendMessage(
                 tabs[0].id,
                 { action: "scanPage" },
                 (response) => {
                     if (chrome.runtime.lastError) {
-                        status.textContent = "❌ Could not scan this page.";
                         console.error("Scan error:", chrome.runtime.lastError.message);
                         return;
                     }
 
                     if (response && response.ok) {
-                        progressBar.style.width = "100%";
-                        progressText.textContent = `${response.count} links found`;
-                        status.textContent = "✅ Scan complete";
-
                         // Save results into storage
                         chrome.storage.local.set({ lastScan: response.items }, () => {
                             const resultsUrl = chrome.runtime.getURL("results/results.html");
@@ -41,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             });
                         });
                     } else {
-                        status.textContent = "❌ No response from content script.";
+                        console.warn("❌ No response from content script.");
                     }
                 }
             );

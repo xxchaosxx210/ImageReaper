@@ -50,14 +50,29 @@
         #resultsList a:hover {
             text-decoration: underline;
         }
+
+        label {
+            display: block;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
 <body>
     <h1>ImageReaper Results</h1>
+
     <div id="controls">
+        <label>
+            Folder:
+            <input type="text" id="resultsDownloadFolder" placeholder="ImageReaper/Subfolder">
+        </label>
+        <label>
+            Prefix:
+            <input type="text" id="resultsFilenamePrefix" placeholder="set1_">
+        </label>
         <button id="downloadBtn" disabled>Download All</button>
     </div>
+
     <div id="status">No results yet.</div>
     <ul id="resultsList"></ul>
 
