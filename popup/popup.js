@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     const scanBtn = document.getElementById("scanBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
     const autoMode = document.getElementById("autoMode");
     const showThumbs = document.getElementById("showThumbs");
     const progressBar = document.getElementById("progressBar");
@@ -29,7 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         // Save results into storage
                         chrome.storage.local.set({ lastScan: response.items }, () => {
-
                             const resultsUrl = chrome.runtime.getURL("results/results.html");
 
                             // Check if results page is already open
@@ -48,12 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             );
         });
-    });
-
-    // --- Download button (still a stub for now) ---
-    downloadBtn.addEventListener("click", () => {
-        status.textContent = "⬇️ Download feature coming soon...";
-        console.log("Download button clicked (to be implemented)");
     });
 
     // --- Auto Mode toggle ---

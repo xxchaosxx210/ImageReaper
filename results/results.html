@@ -22,6 +22,10 @@
             font-weight: bold;
         }
 
+        #controls {
+            margin-bottom: 10px;
+        }
+
         #resultsList {
             list-style: none;
             padding: 0;
@@ -51,6 +55,9 @@
 
 <body>
     <h1>ImageReaper Results</h1>
+    <div id="controls">
+        <button id="downloadBtn" disabled>Download All</button>
+    </div>
     <div id="status">No results yet.</div>
     <ul id="resultsList"></ul>
 
