@@ -8,6 +8,53 @@ document.addEventListener("DOMContentLoaded", () => {
     const status = document.getElementById("status");
     const resultsList = document.getElementById("resultsList");
 
+    // --- Host-specific resolvers ---
+    const HOST_RESOLVERS = {
+        "pixhost.to": async (url) => {
+            const response = await fetch(url);
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+
+            // Pixhost: <img id="image">
+            const img = doc.querySelector("#image");
+            return img ? img.src : null;
+        },
+
+        "imagebam.com": async (url) => {
+            const response = await fetch(url);
+            const html = await response.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+
+            // ImageBam: <img id="imageContainer">
+            const img = doc.querySelector("#imageContainer img");
+            return img ? img.src : null;
+        }
+    };
+
+    // --- Generic resolver ---
+    async function resolveLink(url) {
+        try {
+            const host = new URL(url).hostname.replace(/^www\./, "");
+            const resolver = HOST_RESOLVERS[host];
+            if (!resolver) {
+                console.warn("No resolver for host:", host, "→ fallback to original link");
+                return url;
+            }
+            const directUrl = await resolver(url);
+            if (directUrl) {
+                console.log("Resolved", url, "→", directUrl);
+                return directUrl;
+            } else {
+                console.warn("Resolver failed for", host, "on", url);
+                return url;
+            }
+        } catch (err) {
+            console.error("Error resolving link", url, err);
+            return url;
+        }
+    }
+
+
     // --- Scan button ---
     scanBtn.addEventListener("click", () => {
         status.textContent = "🔍 Scanning page...";
@@ -54,9 +101,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Download button (not fully implemented yet) ---
     downloadBtn.addEventListener("click", () => {
+        status.textContent = "Resolving links...";
+
         const folder = document.getElementById("popupDownloadFolder").value.trim() || "ImageReaper";
         const prefix = document.getElementById("popupFilenamePrefix").value.trim();
+        const links = Array.from(resultsList.querySelectorAll("li a")).map(a => a.textContent);
+
+        resultsList.innerHTML = "";
+
+        // Start async work without awaiting
+        (async () => {
+            for (const url of links) {
+                let directUrl = null;
+                let hostLabel = "";
+
+                try {
+                    const host = new URL(url).hostname.replace(/^www\./, "");
+                    directUrl = await resolveLink(url);
+                    hostLabel = host;
+                } catch (err) {
+                    console.error("Error resolving", url, err);
+                }
+
+                const li = document.createElement("li");
+                const link = document.createElement("a");
+
+                if (directUrl && directUrl !== url) {
+                    link.href = directUrl;
+                    link.textContent = `[${hostLabel}] ${directUrl}`;
+                    link.target = "_blank";
+                    link.style.color = "green";
+                } else {
+                    link.href = url;
+                    link.textContent = `[FAILED] ${url}`;
+                    link.target = "_blank";
+                    link.style.color = "red";
+                }
+
+                li.appendChild(link);
+                resultsList.appendChild(li);
+            }
+
+            status.textContent = "✅ Resolution complete (see list)";
+        })();
     });
+
+
+
 
 
     // --- Auto Mode toggle ---
