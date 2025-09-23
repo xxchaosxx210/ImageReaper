@@ -54,9 +54,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Download button (not fully implemented yet) ---
     downloadBtn.addEventListener("click", () => {
-        status.textContent = "⬇️ Download feature coming soon...";
-        console.log("Download button clicked (to be implemented)");
+        const folder = document.getElementById("popupDownloadFolder").value.trim() || "ImageReaper";
+        const prefix = document.getElementById("popupFilenamePrefix").value.trim();
+
+        window.alert(`Download path: ${folder}\nPrefix: ${prefix}`);
     });
+
 
     // --- Auto Mode toggle ---
     autoMode.addEventListener("change", () => {
@@ -74,4 +77,11 @@ document.addEventListener("DOMContentLoaded", () => {
     chrome.storage.local.get(["autoMode"], (items) => {
         autoMode.checked = items.autoMode || false;
     });
+
+    // --- Load the Saved Folder Path and Prefix
+    chrome.storage.local.get(["downloadFolder", "filenamePrefix"], (items) => {
+        document.getElementById("popupDownloadFolder").value = items.downloadFolder || "ImageReaper";
+        document.getElementById("popupFilenamePrefix").value = items.filenamePrefix || "";
+    });
+
 });
