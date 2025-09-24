@@ -1,3 +1,5 @@
+// results.js
+
 document.addEventListener("DOMContentLoaded", () => {
     const status = document.getElementById("status");
     const resultsList = document.getElementById("resultsList");
@@ -5,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const folderInput = document.getElementById("resultsDownloadFolder");
     const prefixInput = document.getElementById("resultsFilenamePrefix");
 
-    // --- Render viewer links initially ---
+    // --- Render links from scan results ---
     function renderResults(items) {
         resultsList.innerHTML = "";
         if (!items || items.length === 0) {
@@ -18,55 +20,30 @@ document.addEventListener("DOMContentLoaded", () => {
         downloadBtn.disabled = false;
 
         items.forEach(item => {
+            const url = item.url;
+            if (!url) return;
+
             const li = document.createElement("li");
             const link = document.createElement("a");
-            link.href = item.url;
-            link.textContent = item.url;
+            link.href = url;
+            link.textContent = url;
             link.target = "_blank";
-            li.dataset.originalUrl = item.url; // store viewer link
-            li.dataset.resolved = "false";     // mark unresolved
-            li.appendChild(link);
-            resultsList.appendChild(li);
+
+            li.dataset.originalUrl = url;
+            li.appendChild(link);          // ✅ fixed
+            resultsList.appendChild(li);   // ✅ fixed
         });
-
-        // Start resolving in background
-        progressivelyResolve();
     }
 
-    // --- Resolve viewer links one by one with progress updates ---
-    async function progressivelyResolve() {
-        const items = Array.from(resultsList.querySelectorAll("li"));
-        const total = items.length;
-        let resolvedCount = 0;
 
-        for (const li of items) {
-            if (li.dataset.resolved === "true") continue; // skip already resolved
-
-            const url = li.dataset.originalUrl;
-            const directUrl = await resolveLink(url); // from hostResolvers.js
-            li.dataset.resolved = "true";
-
-            // Replace link with direct image URL
-            const link = li.querySelector("a");
-            link.href = directUrl;
-            link.textContent = directUrl;
-
-            // Update progress
-            resolvedCount++;
-            status.textContent = `🔄 Resolving ${resolvedCount}/${total} links...`;
-        }
-
-        status.textContent = `✅ All ${total} links resolved`;
-    }
-
-    // --- Load saved config on startup ---
+    // --- Load last scan from storage on page load ---
     chrome.storage.local.get(["downloadFolder", "filenamePrefix", "lastScan"], (data) => {
         folderInput.value = data.downloadFolder || "ImageReaper";
         prefixInput.value = data.filenamePrefix || "";
         renderResults(data.lastScan);
     });
 
-    // --- Save config on change ---
+    // --- Save config changes ---
     folderInput.addEventListener("input", () => {
         chrome.storage.local.set({ downloadFolder: folderInput.value });
     });
@@ -74,34 +51,46 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.storage.local.set({ filenamePrefix: prefixInput.value });
     });
 
-    // --- Listen for new scans ---
+    // --- Listen for new scans (if Results tab is already open) ---
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === "showResults") {
             renderResults(msg.items);
         }
     });
 
-    // --- Download button handler ---
+    // --- Download button handler (resolve on demand) ---
     downloadBtn.addEventListener("click", async () => {
         const folder = folderInput.value.trim() || "ImageReaper";
         const prefix = prefixInput.value.trim();
-        const links = Array.from(resultsList.querySelectorAll("li a")).map(a => a.href);
+        const items = Array.from(resultsList.querySelectorAll("li"));
+        const total = items.length;
 
-        if (links.length === 0) {
+        if (total === 0) {
             status.textContent = "⚠️ No links to download.";
             return;
         }
 
-        status.textContent = `⬇️ Preparing ${links.length} downloads...`;
+        status.textContent = `⬇️ Resolving ${total} links...`;
 
-        for (const url of links) {
-            const filename = url.split("/").pop();
+        let resolvedCount = 0;
+        for (const li of items) {
+            const viewerUrl = li.dataset.originalUrl;
+            const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
+            const filename = directUrl.split("/").pop();
             const finalName = prefix + filename;
 
-            // For now: just log the intended download
-            console.log("→", folder + "/" + finalName, "from", url);
+            // Update list with resolved link
+            const link = li.querySelector("a");
+            link.href = directUrl;
+            link.textContent = directUrl;
+
+            // For now: log the intended download
+            console.log("→", folder + "/" + finalName, "from", directUrl);
+
+            resolvedCount++;
+            status.textContent = `🔄 Resolved ${resolvedCount}/${total} links...`;
         }
 
-        status.textContent = `✅ Would download ${links.length} files (see console)`;
+        status.textContent = `✅ Finished resolving ${total} links (see console)`;
     });
 });
