@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const folderInput = document.getElementById("resultsDownloadFolder");
     const prefixInput = document.getElementById("resultsFilenamePrefix");
 
+    // --- Render viewer links initially ---
     function renderResults(items) {
         resultsList.innerHTML = "";
         if (!items || items.length === 0) {
@@ -22,9 +23,40 @@ document.addEventListener("DOMContentLoaded", () => {
             link.href = item.url;
             link.textContent = item.url;
             link.target = "_blank";
+            li.dataset.originalUrl = item.url; // store viewer link
+            li.dataset.resolved = "false";     // mark unresolved
             li.appendChild(link);
             resultsList.appendChild(li);
         });
+
+        // Start resolving in background
+        progressivelyResolve();
+    }
+
+    // --- Resolve viewer links one by one with progress updates ---
+    async function progressivelyResolve() {
+        const items = Array.from(resultsList.querySelectorAll("li"));
+        const total = items.length;
+        let resolvedCount = 0;
+
+        for (const li of items) {
+            if (li.dataset.resolved === "true") continue; // skip already resolved
+
+            const url = li.dataset.originalUrl;
+            const directUrl = await resolveLink(url); // from hostResolvers.js
+            li.dataset.resolved = "true";
+
+            // Replace link with direct image URL
+            const link = li.querySelector("a");
+            link.href = directUrl;
+            link.textContent = directUrl;
+
+            // Update progress
+            resolvedCount++;
+            status.textContent = `🔄 Resolving ${resolvedCount}/${total} links...`;
+        }
+
+        status.textContent = `✅ All ${total} links resolved`;
     }
 
     // --- Load saved config on startup ---
@@ -49,8 +81,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Download button handler (still logging for now) ---
-    downloadBtn.addEventListener("click", () => {
+    // --- Download button handler ---
+    downloadBtn.addEventListener("click", async () => {
         const folder = folderInput.value.trim() || "ImageReaper";
         const prefix = prefixInput.value.trim();
         const links = Array.from(resultsList.querySelectorAll("li a")).map(a => a.href);
@@ -62,12 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         status.textContent = `⬇️ Preparing ${links.length} downloads...`;
 
-        // For now: just log the intended filenames
-        links.forEach(url => {
+        for (const url of links) {
             const filename = url.split("/").pop();
             const finalName = prefix + filename;
+
+            // For now: just log the intended download
             console.log("→", folder + "/" + finalName, "from", url);
-        });
+        }
 
         status.textContent = `✅ Would download ${links.length} files (see console)`;
     });
