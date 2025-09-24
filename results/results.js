@@ -30,11 +30,10 @@ document.addEventListener("DOMContentLoaded", () => {
             link.target = "_blank";
 
             li.dataset.originalUrl = url;
-            li.appendChild(link);          // ✅ fixed
-            resultsList.appendChild(li);   // ✅ fixed
+            li.appendChild(link);
+            resultsList.appendChild(li);
         });
     }
-
 
     // --- Load last scan from storage on page load ---
     chrome.storage.local.get(["downloadFolder", "filenamePrefix", "lastScan"], (data) => {
@@ -76,16 +75,17 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const li of items) {
             const viewerUrl = li.dataset.originalUrl;
             const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
-            const filename = directUrl.split("/").pop();
-            const finalName = prefix + filename;
+
+            // Build proper save path
+            const savePath = buildSavePath(directUrl, folder, prefix);
 
             // Update list with resolved link
             const link = li.querySelector("a");
             link.href = directUrl;
             link.textContent = directUrl;
 
-            // For now: log the intended download
-            console.log("→", folder + "/" + finalName, "from", directUrl);
+            // For now: just log the intended download path + source
+            console.log("→", savePath, "from", directUrl);
 
             resolvedCount++;
             status.textContent = `🔄 Resolved ${resolvedCount}/${total} links...`;
@@ -94,3 +94,35 @@ document.addEventListener("DOMContentLoaded", () => {
         status.textContent = `✅ Finished resolving ${total} links (see console)`;
     });
 });
+
+// --- Helper to build safe filenames and paths ---
+function buildSavePath(directUrl, folder, prefix) {
+    try {
+        const urlObj = new URL(directUrl);
+        let filename = urlObj.pathname.split("/").pop() || "image";
+
+        // Strip query string if any
+        filename = filename.split("?")[0];
+
+        // Ensure safe filename (remove illegal chars)
+        filename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+        // Ensure extension
+        if (!/\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i.test(filename)) {
+            filename += ".jpg"; // fallback
+        }
+
+        // Apply prefix if provided
+        if (prefix) {
+            filename = prefix + filename;
+        }
+
+        // Assemble full path
+        let path = folder ? folder.replace(/[\\/]+$/, "") + "/" + filename : filename;
+
+        return path;
+    } catch (e) {
+        console.warn("buildSavePath failed for", directUrl, e);
+        return (prefix || "") + "image.jpg";
+    }
+}

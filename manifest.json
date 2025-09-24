@@ -4,8 +4,17 @@
     "version": "0.1.0",
     "description": "Scan pages for images from specified hosts and download them (development build).",
     "permissions": [
-        "storage"
+        "storage",
+        "downloads",
+        "cookies"
     ],
+    "host_permissions": [
+        "https://www.imagebam.com/*",
+        "https://*.pixhost.to/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
     "content_scripts": [
         {
             "matches": [
