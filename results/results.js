@@ -76,16 +76,21 @@ document.addEventListener("DOMContentLoaded", () => {
             const viewerUrl = li.dataset.originalUrl;
             const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
 
-            // Build proper save path
-            const savePath = buildSavePath(directUrl, folder, prefix);
+            if (directUrl) {
+                const savePath = buildSavePath(directUrl, folder, prefix);
 
-            // Update list with resolved link
-            const link = li.querySelector("a");
-            link.href = directUrl;
-            link.textContent = directUrl;
+                // Update list with resolved link
+                const link = li.querySelector("a");
+                link.href = directUrl;
+                link.textContent = directUrl;
 
-            // For now: just log the intended download path + source
-            console.log("→", savePath, "from", directUrl);
+                console.log("→", savePath, "from", directUrl);
+            } else {
+                // Mark as failed
+                li.classList.add("failed");
+                li.innerHTML += ` <span style="color:red">⚠️ Failed to resolve</span>`;
+                console.warn("❌ Failed to resolve:", viewerUrl);
+            }
 
             resolvedCount++;
             status.textContent = `🔄 Resolved ${resolvedCount}/${total} links...`;

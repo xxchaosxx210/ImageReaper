@@ -4,58 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>ImageReaper Results</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            background: #f9f9f9;
-        }
-
-        h1 {
-            margin-top: 0;
-            font-size: 20px;
-            color: #333;
-        }
-
-        #status {
-            margin: 10px 0;
-            font-weight: bold;
-        }
-
-        #controls {
-            margin-bottom: 10px;
-        }
-
-        #resultsList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #resultsList li {
-            margin: 4px 0;
-            padding: 4px;
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-
-        #resultsList a {
-            color: #0078d7;
-            text-decoration: none;
-            font-size: 13px;
-            word-break: break-all;
-        }
-
-        #resultsList a:hover {
-            text-decoration: underline;
-        }
-
-        label {
-            display: block;
-            margin-top: 5px;
-        }
-    </style>
+    <link rel="stylesheet" href="results.css" />
 </head>
 
 <body>
@@ -63,12 +12,12 @@
 
     <div id="controls">
         <label>
-            Folder:
-            <input type="text" id="resultsDownloadFolder" placeholder="ImageReaper/Subfolder">
+            Save folder:
+            <input type="text" id="resultsDownloadFolder" />
         </label>
         <label>
-            Prefix:
-            <input type="text" id="resultsFilenamePrefix" placeholder="set1_">
+            Filename prefix:
+            <input type="text" id="resultsFilenamePrefix" />
         </label>
         <button id="downloadBtn" disabled>Download All</button>
     </div>
@@ -78,7 +27,6 @@
 
     <script src="../lib/hostResolvers.js"></script>
     <script src="results.js"></script>
-
 </body>
 
 </html>
