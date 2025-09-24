@@ -10,7 +10,8 @@
     ],
     "host_permissions": [
         "https://www.imagebam.com/*",
-        "https://*.pixhost.to/*"
+        "https://*.pixhost.to/*",
+        "https://*/*"
     ],
     "background": {
         "service_worker": "background.js"
