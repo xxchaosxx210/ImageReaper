@@ -57,7 +57,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Download button handler with concurrency ---
+    // Helper: pad numbers with leading zeros to preserve order (001, 002, …)
+    function padIndex(num, total) {
+        const width = String(total).length;
+        return String(num + 1).padStart(width, "0");
+    }
+
+    // --- Download button handler with concurrency + ordered filenames ---
     downloadBtn.addEventListener("click", async () => {
         const folder = folderInput.value.trim() || "ImageReaper";
         const prefix = prefixInput.value.trim();
@@ -71,7 +77,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         status.textContent = `⬇️ Starting download of ${total} links...`;
 
-        const queue = [...items];
+        // keep original order by carrying the index with each item
+        const queue = items.map((li, idx) => ({ li, idx }));
         let active = 0;
         let completed = 0;
         const maxConcurrency = 8;
@@ -84,14 +91,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const li = queue.shift();
+            const { li, idx } = queue.shift();
             const viewerUrl = li.dataset.originalUrl;
             active++;
 
             try {
                 const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
                 if (directUrl) {
-                    const savePath = buildSavePath(directUrl, folder, prefix);
+                    // Prefix filenames with an index to enforce display order
+                    const number = padIndex(idx, total);
+                    const savePath = buildSavePath(directUrl, folder, `${prefix}${number}_`);
+
                     await new Promise((resolve, reject) => {
                         chrome.downloads.download({ url: directUrl, filename: savePath }, downloadId => {
                             if (chrome.runtime.lastError || !downloadId) {
