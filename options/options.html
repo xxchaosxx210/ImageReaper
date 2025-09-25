@@ -4,99 +4,77 @@
 <head>
     <meta charset="UTF-8">
     <title>ImageReaper Options</title>
+    <link rel="stylesheet" href="options.css">
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 1.5em;
-            max-width: 700px;
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
         }
 
-        h1 {
-            font-size: 1.5em;
-            margin-bottom: 0.5em;
+        .warning-box b {
+            color: #7a5200;
         }
 
-        label {
-            display: block;
-            margin-top: 1em;
-            font-weight: bold;
-        }
-
-        textarea,
-        input[type=text],
-        input[type=number] {
-            width: 100%;
-            padding: 0.4em;
-            font-family: monospace;
-            margin-top: 0.2em;
-        }
-
-        input[type=checkbox] {
-            margin-right: 0.4em;
-        }
-
-        button {
-            margin-top: 1em;
-            padding: 0.5em 1em;
-        }
-
-        #status {
-            margin-top: 1em;
-            color: green;
+        .warning-box code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 3px;
         }
     </style>
 </head>
 
 <body>
-    <h1>ImageReaper Settings</h1>
+    <h1>ImageReaper Options</h1>
 
-    <label>
-        Host Whitelist (one per line):
-        <textarea id="whitelist" rows="5"></textarea>
-    </label>
-
-    <label>
-        Host Blacklist (one per line):
-        <textarea id="blacklist" rows="5"></textarea>
-    </label>
-
-    <label>
-        Allowed Extensions (comma separated):
-        <input type="text" id="exts" placeholder="jpg, jpeg">
-    </label>
-
-    <label>
-        Download Folder (inside Downloads):
-        <input type="text" id="downloadFolder" placeholder="ImageReaper">
-    </label>
-
-    <label>
-        Filename Prefix:
-        <input type="text" id="filenamePrefix" placeholder="gallery1_">
-    </label>
-
-
-    <label>
-        <input type="checkbox" id="debug"> Enable Debug Logging
-    </label>
-
-    <label>
-        <input type="checkbox" id="mutationObserve"> Enable Live DOM Watching
-    </label>
-
-    <label>
-        Mutation Debounce (ms):
-        <input type="number" id="debounce" min="50" step="50">
-    </label>
-
-    <div>
-        <button id="save">Save</button>
-        <button id="reset">Reset to Defaults</button>
+    <div class="warning-box">
+        ⚠️ For ImageReaper to download silently into subfolders,
+        Chrome’s setting <b>“Ask where to save each file before downloading”</b>
+        must be disabled.
+        <br><br>
+        Open:
+        <a href="#" id="openSettings">chrome://settings/downloads</a>
+        <span id="copiedMsg" style="display:none; color:green; margin-left:6px;">Copied!</span>
     </div>
 
-    <div id="status"></div>
 
-    <script src="defaults.js"></script>
+    <h2>Host Settings</h2>
+    <label for="whitelist">Whitelist (one host per line):</label><br>
+    <textarea id="whitelist" rows="5" cols="40"></textarea><br><br>
+
+    <label for="blacklist">Blacklist (one host per line):</label><br>
+    <textarea id="blacklist" rows="5" cols="40"></textarea><br><br>
+
+    <label for="exts">Allowed Extensions (comma separated):</label><br>
+    <input id="exts" type="text"><br><br>
+
+    <label><input id="debug" type="checkbox"> Enable debug logging</label><br>
+    <label><input id="mutationObserve" type="checkbox"> Enable MutationObserver</label><br>
+
+    <label for="debounce">Mutation debounce (ms):</label>
+    <input id="debounce" type="number"><br><br>
+
+    <h2>Download Settings</h2>
+    <label for="downloadFolder">Download Folder:</label>
+    <input id="downloadFolder" type="text">
+    <p style="font-size:12px; color:#666; margin:4px 0 12px 0;">
+        You can use <code>/</code> or <code>\</code> to separate subfolders.
+        Example: <code>ImageReaper/NewSet</code> → <i>Downloads/ImageReaper/NewSet</i>
+    </p>
+
+    <label for="filenamePrefix">Filename Prefix:</label>
+    <input id="filenamePrefix" type="text"><br><br>
+
+    <button id="save">Save</button>
+    <button id="reset">Reset</button>
+    <p id="status"></p>
+
+
+
     <script src="options.js"></script>
 </body>
 

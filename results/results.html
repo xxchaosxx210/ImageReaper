@@ -11,16 +11,22 @@
     <h1>ImageReaper Results</h1>
 
     <div id="controls">
-        <label>
-            Save folder:
-            <input type="text" id="resultsDownloadFolder" />
-        </label>
+        <label for="resultsDownloadFolder">Download Folder:</label>
+        <input id="resultsDownloadFolder" type="text">
+        <p style="font-size:12px; color:#666; margin:4px 0 12px 0;">
+            You can use <code>/</code> or <code>\</code> to separate subfolders.
+            Example: <code>ImageReaper/NewSet</code> → <i>Downloads/ImageReaper/NewSet</i>
+        </p>
         <label>
             Filename prefix:
             <input type="text" id="resultsFilenamePrefix" />
         </label>
         <button id="downloadBtn" disabled>Download All</button>
     </div>
+
+    <label for="resultsFilenamePrefix">Filename Prefix:</label>
+    <input id="resultsFilenamePrefix" type="text"><br><br>
+
 
     <div id="status">No results yet.</div>
     <ul id="resultsList"></ul>

@@ -1,3 +1,5 @@
+// options.js
+
 // Default settings (keep in sync with content.js and defaults.js)
 const DEFAULTS = {
     hostWhitelist: ["imagebam.com", "imagevenue.com", "pixhost.to", "imgbox.com", "pimpandhost.com"],
@@ -42,7 +44,10 @@ function saveOptions() {
     const debounce = parseInt(document.getElementById("debounce").value, 10) || DEFAULTS.mutationDebounceMs;
 
     // NEW fields
-    const downloadFolder = document.getElementById("downloadFolder").value.trim() || DEFAULTS.downloadFolder;
+    const downloadFolder = document.getElementById("downloadFolder").value.trim()
+        .replace(/\\/g, "/")  // normalize backslashes to forward slashes
+        || DEFAULTS.downloadFolder;
+
     const filenamePrefix = document.getElementById("filenamePrefix").value.trim();
 
     chrome.storage.local.set({
@@ -72,4 +77,18 @@ document.addEventListener("DOMContentLoaded", () => {
     loadOptions();
     document.getElementById("save").addEventListener("click", saveOptions);
     document.getElementById("reset").addEventListener("click", resetOptions);
+
+    // Handle chrome://settings link (copy to clipboard)
+    const settingsLink = document.getElementById("openSettings");
+    const copiedMsg = document.getElementById("copiedMsg");
+
+    if (settingsLink) {
+        settingsLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText("chrome://settings/downloads").then(() => {
+                copiedMsg.style.display = "inline";
+                setTimeout(() => { copiedMsg.style.display = "none"; }, 2000);
+            });
+        });
+    }
 });

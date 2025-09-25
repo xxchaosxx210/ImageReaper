@@ -30,8 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
             link.target = "_blank";
 
             li.dataset.originalUrl = url;
-            li.appendChild(link);
             resultsList.appendChild(li);
+            li.appendChild(link);
         });
     }
 
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // --- Download button handler (resolve on demand) ---
+    // --- Download button handler with concurrency ---
     downloadBtn.addEventListener("click", async () => {
         const folder = folderInput.value.trim() || "ImageReaper";
         const prefix = prefixInput.value.trim();
@@ -69,62 +69,96 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        status.textContent = `⬇️ Resolving ${total} links...`;
+        status.textContent = `⬇️ Starting download of ${total} links...`;
 
-        let resolvedCount = 0;
-        for (const li of items) {
-            const viewerUrl = li.dataset.originalUrl;
-            const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
+        const queue = [...items];
+        let active = 0;
+        let completed = 0;
+        const maxConcurrency = 8;
 
-            if (directUrl) {
-                const savePath = buildSavePath(directUrl, folder, prefix);
-
-                // Update list with resolved link
-                const link = li.querySelector("a");
-                link.href = directUrl;
-                link.textContent = directUrl;
-
-                console.log("→", savePath, "from", directUrl);
-            } else {
-                // Mark as failed
-                li.classList.add("failed");
-                li.innerHTML += ` <span style="color:red">⚠️ Failed to resolve</span>`;
-                console.warn("❌ Failed to resolve:", viewerUrl);
+        async function worker() {
+            if (queue.length === 0) {
+                if (active === 0) {
+                    status.textContent = `✅ All ${total} downloads complete.`;
+                }
+                return;
             }
 
-            resolvedCount++;
-            status.textContent = `🔄 Resolved ${resolvedCount}/${total} links...`;
+            const li = queue.shift();
+            const viewerUrl = li.dataset.originalUrl;
+            active++;
+
+            try {
+                const directUrl = await resolveLink(viewerUrl); // from hostResolvers.js
+                if (directUrl) {
+                    const savePath = buildSavePath(directUrl, folder, prefix);
+                    await new Promise((resolve, reject) => {
+                        chrome.downloads.download({ url: directUrl, filename: savePath }, downloadId => {
+                            if (chrome.runtime.lastError || !downloadId) {
+                                reject(chrome.runtime.lastError?.message || "Download failed");
+                            } else {
+                                resolve(downloadId);
+                            }
+                        });
+                    });
+
+                    li.classList.add("success");
+                    li.innerHTML = `<a href="${directUrl}" target="_blank">${directUrl}</a> ✅`;
+                } else {
+                    li.classList.add("failed");
+                    li.innerHTML += ` <span style="color:red">⚠️ Failed to resolve</span>`;
+                }
+            } catch (err) {
+                li.classList.add("failed");
+                li.innerHTML += ` <span style="color:red">⚠️ ${err}</span>`;
+                console.warn("❌ Download error:", viewerUrl, err);
+            } finally {
+                active--;
+                completed++;
+                status.textContent = `🔄 Downloaded ${completed}/${total}`;
+                worker(); // pick up next job
+            }
         }
 
-        status.textContent = `✅ Finished resolving ${total} links (see console)`;
+        // Launch up to maxConcurrency workers
+        for (let i = 0; i < Math.min(maxConcurrency, total); i++) {
+            worker();
+        }
     });
 });
 
 // --- Helper to build safe filenames and paths ---
+// Sanitize names to be Windows-friendly
+function sanitizeWindows(name) {
+    name = name.replace(/[<>:"/\\|?*]+/g, "_");
+    name = name.replace(/[. ]+$/, "");
+    const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+    if (reserved.test(name)) {
+        name = "_" + name;
+    }
+    return name || "file";
+}
+
 function buildSavePath(directUrl, folder, prefix) {
     try {
         const urlObj = new URL(directUrl);
         let filename = urlObj.pathname.split("/").pop() || "image";
 
-        // Strip query string if any
         filename = filename.split("?")[0];
-
-        // Ensure safe filename (remove illegal chars)
         filename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-        // Ensure extension
         if (!/\.(jpg|jpeg|png|gif|webp|bmp|tiff)$/i.test(filename)) {
-            filename += ".jpg"; // fallback
+            filename += ".jpg";
         }
 
-        // Apply prefix if provided
         if (prefix) {
             filename = prefix + filename;
         }
 
-        // Assemble full path
-        let path = folder ? folder.replace(/[\\/]+$/, "") + "/" + filename : filename;
+        folder = sanitizeWindows(folder);
+        filename = sanitizeWindows(filename);
 
+        let path = folder ? folder.replace(/[\\/]+$/, "") + "/" + filename : filename;
         return path;
     } catch (e) {
         console.warn("buildSavePath failed for", directUrl, e);
